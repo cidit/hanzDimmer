@@ -64,6 +64,15 @@ void dessinerGradateur(float valeur, float min = 0, float max = 1, int ligne = 0
   drawDimmer(proto.ecran, value, ligne);
 }
 
+/**
+ * Imprime la mesure à tous les endroits pertinants
+*/
+void printMesureEverywhere(int mesure) {
+  Serial.println(mesure);
+  dessinerGradateur(mesure, 0, 4095, 0);
+  proto.ecran.ecrire(String(mesure), 1);
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -79,8 +88,6 @@ void loop()
   int mesure = analogRead(POTENTIOMETER_PIN);
   // la mesure n'est pas constante. faire une regression linéaire des 10 dernières valeurs?
 
-  // affichage
-  Serial.println(mesure);
-  proto.ecran.ecrire(String(mesure));
-  dessinerGradateur(mesure, 0, 4095, 1);
+  printMesureEverywhere(mesure);
 }
+
