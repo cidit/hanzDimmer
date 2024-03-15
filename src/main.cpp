@@ -2,15 +2,29 @@
 #include <ProtoTGP.h>
 
 const int POTENTIOMETER_PIN = 34;
+const int LINE_HEIGHT = 8;
 ProtoTGP proto;
 
 /**
  * Petit truc que j'ai apris en lisant le code de TGP Ecran. :)
  * Détermine si la ligne spécifiée vas être visible sur l'écran ou pas.
+ * @param screen Référence à l'écran à mesurer.
+ * @param line Ligne à vérifier.
  */
 bool isLineValid(Adafruit_GFX &screen, int line)
 {
-  return line >= 0 && line < (screen.height() / 8);
+  return line >= 0 && line < (screen.height() / LINE_HEIGHT);
+}
+
+/**
+ * Obtient le ratio d'une valeur donnée.
+ * @param value La valeur. Assumée d'être entre [max] et [min].
+ * @param max La valeur maximalle.
+ * @param min La valeur minimalle.
+ */
+float getRatio(float value, float max, float min)
+{
+  return (value - min) / (max - min);
 }
 
 /**
@@ -27,10 +41,11 @@ void drawDimmer(Adafruit_GFX &screen, const float value, const int line)
     return;
   }
 
-  // La hauteur des charactères à la plus petite police est de 7 pixels + 1 pixel
-  // d'espacement entre les lignes. Vu que notre gradateur utilise une ligne
-  // complète, c'est également cette hauteur que nous allons utiliser.
-  auto height = 7;
+  // La hauteur des lignes à la plus petite police est de 8 pixels, le dernier 
+  // étant réservé pour laisser un espace entre les charactères. (Les charactères sont donc
+  // techniquement 7px de haut + 1 buffer.) Vu que notre gradateur utilise une ligne de
+  // texte complète, c'est également cette hauteur que nous allons utiliser.
+  auto height = LINE_HEIGHT -1;
   auto width = screen.width();
 
   // La hauteur du coin supérieur gauche de notre gradateur.
@@ -58,19 +73,20 @@ void drawDimmer(Adafruit_GFX &screen, const float value, const int line)
  */
 void dessinerGradateur(float valeur, float min = 0, float max = 1, int ligne = 0)
 {
-  // Déterminer la valeur entre 0 et 1.
-  auto value = (valeur - min) / (max - min);
-
-  drawDimmer(proto.ecran, value, ligne);
+  auto ratio = getRatio(valeur, max, min);
+  drawDimmer(proto.ecran, ratio, ligne);
 }
 
 /**
  * Imprime la mesure à tous les endroits pertinants
-*/
-void printMesureEverywhere(int mesure) {
-  Serial.println(mesure);
-  dessinerGradateur(mesure, 0, 4095, 0);
-  proto.ecran.ecrire(String(mesure), 1);
+ * @param analogMesure La mesure à imprimer. Le maximum est de 4095.
+ */
+void printMesureEverywhere(int analogMesure)
+{
+  auto maxAnalogValue = 4095;
+  Serial.println(analogMesure);
+  dessinerGradateur(analogMesure, 0, maxAnalogValue, 0);
+  proto.ecran.ecrire(String(analogMesure), 1);
 }
 
 void setup()
@@ -86,8 +102,7 @@ void loop()
   proto.ecran.clearDisplay();
 
   int mesure = analogRead(POTENTIOMETER_PIN);
-  // la mesure n'est pas constante. faire une regression linéaire des 10 dernières valeurs?
+  // la mesure n'est pas constante. faire une moyenne des 10 dernières valeurs?
 
   printMesureEverywhere(mesure);
 }
-
