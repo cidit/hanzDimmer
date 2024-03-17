@@ -28,6 +28,14 @@ float getRatio(float value, float max, float min)
 }
 
 /**
+ * operation inverse de getRatio. obtient la valeur entre [max] et [min] qui correspond au ratio
+ */
+float getIntermediate(float ratio, float max, float min)
+{
+  return ((max - min) * ratio) + min;
+}
+
+/**
  * @param screen L'écran spécifique sur lequel dessiner. Doit avoir été initialisé au préalable.
  * @param value Est assumée d'être entre 0 et 1.
  * @param line La ligne est validée avec la taille de l'écran. la fonction ne fera pas de travail si celle-ci se trouve au dela des limites de l'écran
@@ -41,11 +49,11 @@ void drawDimmer(Adafruit_GFX &screen, const float value, const int line)
     return;
   }
 
-  // La hauteur des lignes à la plus petite police est de 8 pixels, le dernier 
+  // La hauteur des lignes à la plus petite police est de 8 pixels, le dernier
   // étant réservé pour laisser un espace entre les charactères. (Les charactères sont donc
   // techniquement 7px de haut + 1 buffer.) Vu que notre gradateur utilise une ligne de
   // texte complète, c'est également cette hauteur que nous allons utiliser.
-  auto height = LINE_HEIGHT -1;
+  auto height = LINE_HEIGHT - 1;
   auto width = screen.width();
 
   // La hauteur du coin supérieur gauche de notre gradateur.
@@ -78,6 +86,35 @@ void dessinerGradateur(float valeur, float min = 0, float max = 1, int ligne = 0
 }
 
 /**
+ * Le gradateur circulaire est dessiné avec un rayon de taille de police 3.
+ */
+void drawCircularDimmer(Adafruit_GFX &screen, float value, float line, int xoffset = 0)
+{
+  auto radius = LINE_HEIGHT * 3;
+  // line+1 Parce que on veut que le gradateur soit dessiné au bas de la ligne
+  auto y = LINE_HEIGHT * (line + 1);
+  auto x = radius + xoffset;
+
+  auto angleRads = getIntermediate(value, PI, 0);
+  auto linex = cosf(angleRads) * radius;
+  auto liney = sinf(angleRads) * radius;
+
+  screen.startWrite();
+  screen.fillCircleHelper(x, y, radius, 0x1, 0, BLACK);
+  screen.fillCircleHelper(x, y, radius, 0x2, 0, BLACK);
+  screen.drawCircleHelper(x, y, radius, 0x1, WHITE);
+  screen.drawCircleHelper(x, y, radius, 0x2, WHITE);
+  screen.drawLine(x, y, x - linex, y - liney, WHITE);
+  screen.endWrite();
+}
+
+void dessinerGradateurCirculaire(float valeur, float min = 0, float max = 1, int ligne = 0, int offset = 0)
+{
+  auto ratio = getRatio(valeur, max, min);
+  drawCircularDimmer(proto.ecran, ratio, ligne, offset);
+}
+
+/**
  * Imprime la mesure à tous les endroits pertinants
  * @param analogMesure La mesure à imprimer. Le maximum est de 4095.
  */
@@ -87,6 +124,8 @@ void printMesureEverywhere(int analogMesure)
   Serial.println(analogMesure);
   dessinerGradateur(analogMesure, 0, maxAnalogValue, 0);
   proto.ecran.ecrire(String(analogMesure), 1);
+  proto.ecran.ecrire("0         4095", 4);
+  dessinerGradateurCirculaire(analogMesure, 0, maxAnalogValue, 4, 8);
 }
 
 void setup()
