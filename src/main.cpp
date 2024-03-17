@@ -96,15 +96,15 @@ void drawCircularDimmer(Adafruit_GFX &screen, float value, float line, int xoffs
   auto x = radius + xoffset;
 
   auto angleRads = getIntermediate(value, PI, 0);
-  auto linex = cosf(angleRads) * radius;
-  auto liney = sinf(angleRads) * radius;
+  auto line_end_x = cosf(angleRads) * radius;
+  auto line_end_y = sinf(angleRads) * radius;
 
   screen.startWrite();
   screen.fillCircleHelper(x, y, radius, 0x1, 0, BLACK);
   screen.fillCircleHelper(x, y, radius, 0x2, 0, BLACK);
   screen.drawCircleHelper(x, y, radius, 0x1, WHITE);
   screen.drawCircleHelper(x, y, radius, 0x2, WHITE);
-  screen.drawLine(x, y, x - linex, y - liney, WHITE);
+  screen.drawLine(x, y, x - line_end_x, y - line_end_y, WHITE);
   screen.endWrite();
 }
 
