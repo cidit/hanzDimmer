@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ProtoTGP.h>
 
-const int POTENTIOMETER_PIN = 34;
+const int POTENTIOMETER_PIN = 32;
 const int LINE_HEIGHT = 8;
 ProtoTGP proto;
 
